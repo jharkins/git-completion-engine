@@ -2,24 +2,21 @@ from werkzeug.exceptions import HTTPException
 from flask import Flask, request, jsonify
 from celery import Celery
 import tasks
-import os
+import traceback
 
 from bootstrap import check_redis_connection
 
 app = Flask(__name__)
 
 redis_ip = 'localhost'
-app.config['CELERY_BROKER_URL'] = f'redis://{redis_ip}:6379/0'
+app.config['CELERY_BROKER_URL'] = "amqp://localhost:5672//"
 app.config['CELERY_RESULT_BACKEND'] = f'redis://{redis_ip}:6379/0'
 app.config['REDIS_URL'] = f'redis://{redis_ip}:6379/0'
 
 
-@app.before_first_request
-def initialize():
-    check_redis_connection()
-
-
 def make_celery(app):
+    check_redis_connection(app.config['REDIS_URL'])
+
     celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
     celery.conf.update(app.config)
 
@@ -37,6 +34,7 @@ celery = make_celery(app)
 
 @app.errorhandler(Exception)
 def handle_exception(error):
+    traceback.print_exc()  # Add this line to print the traceback
     if isinstance(error, HTTPException):
         response = {"error": error.name, "message": error.description}
         status_code = error.code
