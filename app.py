@@ -1,10 +1,11 @@
-from werkzeug.exceptions import HTTPException
-from flask import Flask, request, jsonify
-from celery import Celery
-from tasks.analyze_commits import analyze_commits
 import traceback
 
+from celery import Celery
+from flask import Flask, jsonify, request
+from werkzeug.exceptions import HTTPException
+
 from bootstrap import check_redis_connection
+from tasks.analyze_commits import analyze_commits
 
 app = Flask(__name__)
 

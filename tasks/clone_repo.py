@@ -1,7 +1,6 @@
-import os
-import shutil
-from git import Repo, GitCommandError
+from git import Repo
 from celery import shared_task
+from commit import Commit
 
 
 @shared_task
@@ -17,6 +16,8 @@ def clone_repo_task(url, temp_dir):
         for diff in commit.diff(parent_commit, create_patch=True):
             diffs.append(diff.diff.decode('utf-8'))
 
-        commit_data.append({"commit_message": message, "commit_diffs": diffs})
+        # Create a Commit instance
+        commit_obj = Commit(commit.hexsha, message, diffs)
+        commit_data.append(commit_obj)
 
     return commit_data

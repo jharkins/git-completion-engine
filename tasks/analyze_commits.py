@@ -5,6 +5,7 @@ from celery import shared_task, group
 from .clone_repo import clone_repo_task
 from .generate_summary import generate_summary_task
 from cache import get_cached_data, update_cache
+from commit import Commit
 
 
 @shared_task(bind=True)
@@ -24,11 +25,11 @@ def analyze_commits(self, url):
         commit_data = clone_repo_task(url, temp_dir)
 
         summary_tasks = group(generate_summary_task.s(
-            commit["commit_diffs"]) for commit in commit_data)
+            commit.diff) for commit in commit_data)
         summaries = summary_tasks.apply_async().get()
 
         for idx, commit in enumerate(commit_data):
-            commit["summary"] = summaries[idx]
+            commit.summary = summaries[idx]
 
     except GitCommandError as e:
         return {"error": str(e)}
@@ -39,8 +40,8 @@ def analyze_commits(self, url):
 
     update_cache(url, commit_data)
 
-    for data in commit_data:
-        print(f"Commit message: {data['commit_message']}")
-        print(f"Summary: {data['summary']}")
+    for commit in commit_data:
+        print(f"Commit message: {commit.message}")
+        print(f"Summary: {commit.summary}")
 
     return {"url": url, "commit_data": commit_data}
