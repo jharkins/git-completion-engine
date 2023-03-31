@@ -1,7 +1,7 @@
 from werkzeug.exceptions import HTTPException
 from flask import Flask, request, jsonify
 from celery import Celery
-import tasks
+from tasks.analyze_commits import analyze_commits
 import traceback
 
 from bootstrap import check_redis_connection
@@ -17,6 +17,7 @@ app.config['REDIS_URL'] = f'redis://{redis_ip}:6379/0'
 def make_celery(app=None):
     if app is None:
         app = Flask(__name__)
+
     app.config.from_object("config.Config")
     celery = Celery(app.import_name, backend=app.config["CELERY_RESULT_BACKEND"],
                     broker=app.config["CELERY_BROKER_URL"])

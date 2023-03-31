@@ -1,6 +1,6 @@
 import time
 import sys
-from tasks import analyze_commits
+from tasks.analyze_commits import analyze_commits
 from celery.result import AsyncResult
 from app import make_celery
 from pprint import pprint
