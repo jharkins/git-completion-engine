@@ -14,17 +14,21 @@ app.config['CELERY_RESULT_BACKEND'] = f'redis://{redis_ip}:6379/0'
 app.config['REDIS_URL'] = f'redis://{redis_ip}:6379/0'
 
 
-def make_celery(app):
-    check_redis_connection(app.config['REDIS_URL'])
-
-    celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+def make_celery(app=None):
+    if app is None:
+        app = Flask(__name__)
+    app.config.from_object("config.Config")
+    celery = Celery(app.import_name, backend=app.config["CELERY_RESULT_BACKEND"],
+                    broker=app.config["CELERY_BROKER_URL"])
     celery.conf.update(app.config)
+    TaskBase = celery.Task
 
-    class ContextTask(celery.Task):
+    class ContextTask(TaskBase):
+        abstract = True
+
         def __call__(self, *args, **kwargs):
             with app.app_context():
-                return self.run(*args, **kwargs)
-
+                return TaskBase.__call__(self, *args, **kwargs)
     celery.Task = ContextTask
     return celery
 
