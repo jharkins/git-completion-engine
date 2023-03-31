@@ -2,6 +2,7 @@ import os
 import shutil
 from git import Repo, GitCommandError
 from celery import shared_task
+from cache import get_cached_data, update_cache
 
 
 @shared_task(bind=True)
@@ -9,6 +10,11 @@ def analyze_commits(self, url):
     parent_dir = "inspection_jobs"
     task_dir = str(self.request.id)
     temp_dir = os.path.join(parent_dir, task_dir)
+
+    cached_data = get_cached_data(url)
+    if cached_data:
+        print("Using cached data for", url)
+        return cached_data
 
     # Create the parent directory if it doesn't exist
     os.makedirs(parent_dir, exist_ok=True)
@@ -37,5 +43,7 @@ def analyze_commits(self, url):
         # Remove the temporary directory
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
+
+    update_cache(url, commit_messages, commit_diffs)
 
     return {"url": url, "commit_messages": commit_messages, "commit_diffs": commit_diffs}
