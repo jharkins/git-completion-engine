@@ -3,6 +3,7 @@ import sys
 from tasks import analyze_commits
 from celery.result import AsyncResult
 from app import make_celery
+from pprint import pprint
 
 
 def main():
@@ -27,10 +28,10 @@ def main():
     if result.successful():
         print("Task completed successfully!")
         print("Result:")
-        print(result.result)
+        pprint(result.result)
     else:
         print("Task failed:")
-        print(result.result)
+        pprint(result.result)
 
 
 if __name__ == "__main__":
